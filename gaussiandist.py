@@ -5,7 +5,7 @@ x_rand_span_x = 0.085 * np.random.randint(1, 2, (1, N))  # setting up position e
 x_rand_span_y = 0.085 * np.random.randint(1, 2, (1, N))
 XRandSpan = np.concatenate((x_rand_span_x, x_rand_span_y))
 '''
-# I assumed that we have x pos error distribution and y pos error distribution, and they are independent.
+# I assumed that we have x pos error distribution(gaussian) and y pos error distribution(gaussian), and they are independent.
 # this code includes a portion of create_si_pr_barrier_certificate_centralized and the whole trap_cdf_inv function to visualize my idea in one file
 N = 4
 robotGaussianDistInfox = np.array([[mean1, mean2, mean3, mean4],[std1, std2, std3, std4]]) #all the robots' x pos distribution info including mean and std
