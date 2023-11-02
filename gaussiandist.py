@@ -27,8 +27,8 @@ for i in range(N - 1):
         XRandSpan[1, j] = robotGaussianDistInfoy[0,j] - (z_value * robotGaussianDistInfoy[1,j])
         #until here
         
-        b2_x, b1_x, sigma = trap_cdf_inv(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j], confidence_level)
-        b2_y, b1_y, sigma = trap_cdf_inv(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j], confidence_level)
+        b2_x, b1_x, sigma = trap_cdf_inv(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j])
+        b2_y, b1_y, sigma = trap_cdf_inv(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j])
         '''
         To sum up
         XRandSpan[0,i] is robot i's x error gaussian distribution's confidence level % value, for example if confidence level is 95% then its the 95% value of the distribution
