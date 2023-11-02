@@ -37,7 +37,7 @@ for i in range(N - 1):
               
 
 
-def trap_cdf_inv(a, c, delta, confidence_level):
+def trap_cdf_inv(a, c, delta):
     
     
   
