@@ -6,8 +6,8 @@ x_rand_span_y = 0.085 * np.random.randint(1, 2, (1, N))
 XRandSpan = np.concatenate((x_rand_span_x, x_rand_span_y))
 '''
 N = 4
-robotGaussianDistInfox = np.array([[mean1, mean2, mean3, mean4],[std1, std2, std3, std4]])
-robotGaussianDistInfoy = np.array([[mean1, mean2, mean3, mean4],[std1, std2, std3, std4]])
+robotGaussianDistInfox = np.array([[mean1, mean2, mean3, mean4],[std1, std2, std3, std4]]) #all the robots' x pos distribution info including mean and std
+robotGaussianDistInfoy = np.array([[mean1, mean2, mean3, mean4],[std1, std2, std3, std4]]) #all the robots' y pos distribution info including mean and std
 for i in range(N - 1):
     for j in range(i + 1, N):
 
@@ -18,12 +18,14 @@ for i in range(N - 1):
         BB_x = -safety_radius ** 2 - 2 / gamma * max_dvij_x * max_dxij_x
         BB_y = -safety_radius ** 2 - 2 / gamma * max_dvij_y * max_dxij_y
 
+        #siwon added
         z_value = stats.norm.ppf(1 - (1 - confidence_level) / 2) #if confidence level is 95% then z_value is about 1.96
         XRandSpan[0, i] = robotGaussianDistInfox[0,i] - (z_value * robotGaussianDistInfox[1,i])
         XRandSpan[0, j] = robotGaussianDistInfox[0,j] - (z_value * robotGaussianDistInfox[1,j])
       
         XRandSpan[1, i] = robotGaussianDistInfoy[0,i] - (z_value * robotGaussianDistInfoy[1,i])
         XRandSpan[1, j] = robotGaussianDistInfoy[0,j] - (z_value * robotGaussianDistInfoy[1,j])
+        #until here
         
         b2_x, b1_x, sigma = trap_cdf_inv(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j], confidence_level)
         b2_y, b1_y, sigma = trap_cdf_inv(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j], confidence_level)
