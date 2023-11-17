@@ -16,11 +16,11 @@ prevtheta = np.zeros((1, N))
 firstFlag = 1
 def transition_model(i, p, dt):
 
-    x_dot = dxu[0,i](linear vel) * math.cos(p[2,i] + (dxu[1,i](angular vel) / 2)) # do i still have to divide dxu[1] by 2?
+    x_dot = dxu[0,i] * dt * math.cos(p[2,i] + (dxu[1,i] * dt/ 2)) # do i still have to divide dxu[1] by 2?
     y_dot = dxu[0,i] * math.sin(p[2,i] + (dxu[1,i] / 2)) # do i still have to divide dxu[1] by 2?
     
-    p[0,i] = p[0,i] + x_dot * dt
-    p[1,i] = p[1,i] + y_dot * dt
+    p[0,i] = p[0,i] + x_dot 
+    p[1,i] = p[1,i] + y_dot 
     p[2,i] = p[2,i] + dxu[1,i] * dt
 
     return p
