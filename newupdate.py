@@ -36,7 +36,7 @@ rospy.init_node('teleop_twist_keyboard')
 publisher = rospy.Publisher('/cmd_vel', Twist, queue_size = 1)
 rospy.sleep(2)
 twist = Twist()
-dt = 0.01
+dt = 0.05
 N = 1 # Number of robots
 x = np.zeros((3, N))
 #goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
