@@ -178,9 +178,15 @@ def measure(i):
     global x, p, cov_list
     h = np.array([[1,0,0],[0,1,0],[0,0,1]])
     K = cov_list[i] @ h.T @ np.inv(update_cov2(i))
-    p[0,i] = p[0,i] + K[0,0] @ (x[0,i] - p[0,i])
-    p[1,i] = p[1,i] + K[1,1] @ (x[1,i] - p[1,i])
-    p[2,i] = p[2,i] + K[2,2] @ (x[2,i] - p[2,i])
+    #maybe fix?
+    
+    k = np.array([ [p[0,i]],[p[1,i]],[p[2,i]] ])
+    q = np.array([ [x[0,i]],[x[1,i]],[x[2,i]] ])
+
+    t = k + K @ (q - k)
+    p[0,i] = t[0,0]
+    p[1,i] = t[1,0]
+    p[2,i] = t[2,0]
     eye = np.eye((3,3))
     cov_list[i] = (eye - K @ h) @ cov_list[i]
     
