@@ -222,7 +222,7 @@ def measure(i):
     
 
 def callback(data, args):
-    global prevtheta, firstFlag, dt
+    global prevtheta, firstFlag, dt, x, p
     i = args
 
     #do i have to wrap the angle?
@@ -244,10 +244,11 @@ def callback(data, args):
 def control_callback(event):
 
     for i in range(N):
-        x[0, i] = p[0,i]
-        x[1, i] = p[1,i]
-        x[2, i] = p[2,i]
-        dxu = unicycle_position_controller(x, goal_points)
+        t = np.array([[0],[0],[0]])
+        t[0, 0] = p[0,i]
+        t[1, 0] = p[1,i]
+        t[2, 0] = p[2,i]
+        dxu = unicycle_position_controller(t, goal_points)
         #dxu = uni_barrier_cert(dxu, x)dxu = uni_barrier_cert(dxu, x)
         twist.linear.x = dxu[0,p]/5.
         twist.linear.y = 0.0
