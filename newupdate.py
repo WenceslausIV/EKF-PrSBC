@@ -244,6 +244,9 @@ def callback(data, args):
 def control_callback(event):
 
     for i in range(N):
+        x[0, i] = p[0,i]
+        x[1, i] = p[1,i]
+        x[2, i] = p[2,i]
         dxu = unicycle_position_controller(x, goal_points)
         #dxu = uni_barrier_cert(dxu, x)dxu = uni_barrier_cert(dxu, x)
         twist.linear.x = dxu[0,p]/5.
