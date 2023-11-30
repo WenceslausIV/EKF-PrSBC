@@ -99,7 +99,7 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
 
 	return pose_uni_clf_controller
 
-unicycle_position_controller = create_clf_unicycle_position_controller
+unicycle_position_controller = create_clf_unicycle_pose_controller
 
 def transition_model(i, p, dt):
 
