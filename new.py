@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import time
 
-from __future__ import print_function
 import rosnode
 import tf_conversions
 import threading
