@@ -127,6 +127,7 @@ def getG(i, p, dt):
     G = np.array([[1,0,-1],[0,1,-1],[0,0,1]], dtype=np.float32)
     G[0,2] = -dxu[0,i] * dt * math.sin(p[2,i]) 
     G[1,2] = dxu[0,i] * dt * math.cos(p[2,i])
+    return G
 
 def getV(i, p, dt):
     '''
