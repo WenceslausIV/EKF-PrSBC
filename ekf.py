@@ -288,6 +288,7 @@ def ekf_update_function(event):
     #print(p)
     print(cov_list[0])
 index = 0
+'''
 def gaussian_graph(event):
     global index
      
@@ -310,6 +311,36 @@ def gaussian_graph(event):
     print('save')
     index += 1
 # plt.show()
+'''
+def pos_compare(event):
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_xlabel('X Position')
+    ax.set_ylabel('Y Position')
+    ax.set_title('EKF vs. Motion Capture Position')
+
+    # Sample data collection loop - replace with your actual data collection
+    for t in range(30):  # Loop for 100 updates (adjust as needed)
+        # Simulated data update - replace with actual data retrieval
+        ekf_x, ekf_y = p[0, 0], p[1, 0]  # Replace with EKF data retrieval
+        mocap_x, mocap_y = x[0, 0], x[1, 0]  # Replace with Motion Capture data retrieval
+
+        # Update the plot
+        ax.clear()
+        ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='EKF Position')
+        ax.scatter(mocap_x, mocap_y, color='red', marker='x', label='Motion Capture Position')
+        ax.legend()
+
+        # Draw the new plot
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(0.5)  # Delay for demonstration, adjust as needed
+    plt.ioff()
+    filename =  '{}.png'.format(index)
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename)
+    print('save')
 
 def central():
     rospy.Subscriber('/vrpn_client_node/Hus117' + '/pose', PoseStamped, callback, 0)
