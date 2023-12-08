@@ -347,7 +347,8 @@ def central():
 
     timer = rospy.Timer(rospy.Duration(0.05), control_callback)
     ekf_timer = rospy.Timer(rospy.Duration(0.06), ekf_update_function)
-    graph_timer = rospy.Timer(rospy.Duration(1), gaussian_graph)
+    #graph_timer = rospy.Timer(rospy.Duration(1), gaussian_graph)
+    pos_compare()
     rospy.spin()
 
 if __name__ == '__main__':
