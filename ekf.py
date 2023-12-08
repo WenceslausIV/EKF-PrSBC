@@ -106,13 +106,59 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
 
 unicycle_position_controller = create_clf_unicycle_pose_controller()
 
+def findDistanceBetweenAngles(a, b):
+    '''
+    Get the smallest orientation difference in range [-pi,pi] between two angles 
+    Parameters:
+        a (double): an angle in radians
+        b (double): an angle in radians
+    
+    Returns:
+        double: smallest orientation difference in range [-pi,pi]
+    '''
+    result = 0
+    difference = b - a
+    
+    if difference > math.pi:
+      difference = math.fmod(difference, math.pi)
+      result = difference - math.pi
+ 
+    elif(difference < -math.pi):
+      difference = math.fmod(difference, math.pi)
+      result = difference + math.pi
+ 
+    else:
+      result = difference
+ 
+    return result
+ 
+ 
+ 
+def displaceAngle(a1, a2):
+    '''
+    Displace an orientation by an angle and stay within [-pi,pi] range
+    Parameters:
+        a1 (double): an angle
+        a2 (double): an angle
+    
+    Returns:
+        double: The resulting angle in range [-pi,pi] after displacing a1 by a2
+    '''
+    a2 = a2 % (2.0*math.pi)
+ 
+    if a2 > math.pi:
+        a2 = (a2 % math.pi) - math.pi
+ 
+    return findDistanceBetweenAngles(-a1,a2)
+
 def transition_model(i, p, dt):
     x_dot = (dxu[0,i]) * dt * math.cos(p[2,i]) 
     y_dot = (dxu[0,i]) * dt * math.sin(p[2,i]) 
     
     p[0,i] = p[0,i] + x_dot 
-    p[1,i] = p[1,i] + y_dot 
-    p[2,i] = p[2,i] + (dxu[1,i]) * dt
+    p[1,i] = p[1,i] + y_dot
+    t = displaceAngle(p[2,i],(dxu[1,i] * dt))
+    p[2,i] = t
 
     return p
 
