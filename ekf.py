@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 import time
-
 import rosnode
 import tf_conversions
 import threading
-
 import roslib; roslib.load_manifest('teleop_twist_keyboard')
 import rospy
-
 from geometry_msgs.msg import Twist
-
 import sys, select, termios, tty
-
 import random
 import math
 import numpy as np
@@ -24,11 +18,9 @@ from cvxopt import matrix
 from cvxopt.blas import dot
 from cvxopt.solvers import qp, options
 from cvxopt import matrix, sparse
-
 import qpsolvers
 from qpsolvers import solve_qp
 from scipy import sparse as sparsed
-
 import itertools
 import numpy as np
 from scipy.special import comb
@@ -41,6 +33,7 @@ twist = Twist()
 dt = 0.06
 N = 1 # Number of robots
 x = np.zeros((3, N))
+
 nx = np.array([[0],[0],[0]])
 
 #goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
@@ -52,7 +45,7 @@ p = np.zeros((3, N))
 cov_list = []
 cov_list2 = []
 for i in range(N):
-    cov = np.full((3, 3), 10.0, dtype=np.float64)
+    cov = np.full((3, 3), 1.0, dtype=np.float64)
     cov_list.append(cov)
     cov_list2.append(cov)
 
@@ -93,9 +86,6 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
 			ca = np.cos(alpha)
 			sa = np.sin(alpha)
 
-			print(gamma)
-			print(e)
-			print(ca)
 
 			dxu[0, i] = gamma * e * ca
 			dxu[1, i] = k * alpha + gamma * ((ca * sa) / alpha) * (alpha + h * theta)
@@ -105,6 +95,7 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
 	return pose_uni_clf_controller
 
 unicycle_position_controller = create_clf_unicycle_pose_controller()
+
 
 def findDistanceBetweenAngles(a, b):
     '''
@@ -151,13 +142,14 @@ def displaceAngle(a1, a2):
  
     return findDistanceBetweenAngles(-a1,a2)
 
+
 def transition_model(i, p, dt):
     x_dot = (dxu[0,i]) * dt * math.cos(p[2,i]) 
     y_dot = (dxu[0,i]) * dt * math.sin(p[2,i]) 
     
     p[0,i] = p[0,i] + x_dot 
     p[1,i] = p[1,i] + y_dot
-    t = displaceAngle(p[2,i],(dxu[1,i] * dt))
+    t = displaceAngle(p[2,i], (dxu[1,i]*dt))
     p[2,i] = t
 
     return p
@@ -200,7 +192,7 @@ def updateCov(i,p, dt):
     global cov_list, m
     g = getG(i,p, dt)
     v = getV(i,p, dt)
-    ahh = 0.2
+    ahh = 0.4
     # set velocity noise covariance CHANGE LATER!!!
     m = np.array([[ahh**2 * (dxu[0,i]),0],[0,ahh**2*(dxu[1,i])]])
     cov_list[i] = g @ cov_list[i] @ g.T + v @ m @ v.T
@@ -208,9 +200,9 @@ def updateCov(i,p, dt):
 
 def update_cov2(i):
     global cov_list, cov_list2
-    ahh = 0.08
+    ahh = 0.02
     # set camera measurement noise covariance CHANGE LATER!!!
-    Q = np.array([[ahh**2 ,0,0],[0,ahh**2,0],[0,0,ahh**2]])
+    Q = np.array([[0.05 ,0,0],[0,0.05,0],[0,0,ahh**2]])
 
     h = np.array([[1,0,0],[0,1,0],[0,0,1]])
     cov_list2[i] = h @ cov_list[i] @ h.T + Q
@@ -259,9 +251,9 @@ def callback(data, args):
 
 
     if firstFlag == 1:
-        p[0,i] = data.pose.position.x
-        p[1,i] = data.pose.position.y
-        p[2,i] = theta
+        p[0,i] = .0
+        p[1,i] = .0
+        p[2,i] = .0
         firstFlag = 0
 
 
@@ -286,8 +278,9 @@ def ekf_update_function(event):
     predict(0)
     measure(0)
     #print(p)
-    print(cov_list[0])
-index = 0
+    #print(cov_list[0])
+#index = 0
+
 '''
 def gaussian_graph(event):
     global index
@@ -312,29 +305,48 @@ def gaussian_graph(event):
     index += 1
 # plt.show()
 '''
-def pos_compare(event):
+def pos_compare():
+   # global index
+    index = 0 
+    print("hello")
     plt.ion()
     fig, ax = plt.subplots(figsize=(10, 6))
+    plt.xlim(0.0,3.0)
+    plt.ylim(0.0,3.0)
+
     ax.set_xlabel('X Position')
     ax.set_ylabel('Y Position')
-    ax.set_title('EKF vs. Motion Capture Position')
-
+    ax.set_title('EKF Figure')
+    print('*****************************')
+    ekf_xl = []
+    ekf_yl = []
     # Sample data collection loop - replace with your actual data collection
     for t in range(30):  # Loop for 100 updates (adjust as needed)
         # Simulated data update - replace with actual data retrieval
+        ekf_xl.append(p[0,0])
+        ekf_yl.append(p[1,0]) 
+        
+        print(t) 
         ekf_x, ekf_y = p[0, 0], p[1, 0]  # Replace with EKF data retrieval
         mocap_x, mocap_y = x[0, 0], x[1, 0]  # Replace with Motion Capture data retrieval
-
+        nx_x, nx_y = nx[0,0], nx[1,0]
         # Update the plot
-        ax.clear()
-        ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='EKF Position')
-        ax.scatter(mocap_x, mocap_y, color='red', marker='x', label='Motion Capture Position')
-        ax.legend()
-
+        #ax.clear()
+        ax.scatter(ekf_x, ekf_y, color='black', marker='o')
+        ax.scatter(mocap_x, mocap_y, color='red', marker='x')
+        ax.scatter(nx_x, nx_y, color= 'green', marker='*')
+       # ax.legend()
+        print(t)
         # Draw the new plot
-        fig.canvas.draw()
-        fig.canvas.flush_events()
-        time.sleep(0.5)  # Delay for demonstration, adjust as needed
+        #fig.canvas.draw()
+        #fig.canvas.flush_events()
+       # time.sleep(0.5)  # Delay for demonstration, adjust as needed
+    ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='EKF Estimated  Position')
+    ax.scatter(mocap_x, mocap_y, color='red', marker='x', label='Ground Truth Position')
+    ax.scatter(nx_x, nx_y, color= 'green', marker='*', label = 'Noisy Observation')
+    for o in range(30):
+        plt.text(ekf_xl[o], ekf_yl[o] ,str(o), color = 'red')
+    index = index +1
     plt.ioff()
     filename =  '{}.png'.format(index)
     plt.legend()
@@ -347,7 +359,7 @@ def central():
 
     timer = rospy.Timer(rospy.Duration(0.05), control_callback)
     ekf_timer = rospy.Timer(rospy.Duration(0.06), ekf_update_function)
-    #graph_timer = rospy.Timer(rospy.Duration(1), gaussian_graph)
+    #pos_compare_timer = rospy.Timer(rospy.Duration(50), pos_compare)
     pos_compare()
     rospy.spin()
 
@@ -357,3 +369,5 @@ if __name__ == '__main__':
         central()
     except rospy.ROSInterruptException:
         print(rospy.ROSInterruptException)
+
+ 
