@@ -192,9 +192,9 @@ def updateCov(i,p, dt):
     global cov_list, m
     g = getG(i,p, dt)
     v = getV(i,p, dt)
-    ahh = 0.4
+    ahh = 10
     # set velocity noise covariance CHANGE LATER!!!
-    m = np.array([[ahh**2 * (dxu[0,i]),0],[0,ahh**2*(dxu[1,i])]])
+    m = np.array([[ahh * (dxu[0,i]),0],[0,ahh*(dxu[1,i])]])
     cov_list[i] = g @ cov_list[i] @ g.T + v @ m @ v.T
     return cov_list[i]
 
@@ -202,7 +202,7 @@ def update_cov2(i):
     global cov_list, cov_list2
     ahh = 0.02
     # set camera measurement noise covariance CHANGE LATER!!!
-    Q = np.array([[0.05 ,0,0],[0,0.05,0],[0,0,ahh**2]])
+    Q = np.array([[0.001 ,0,0],[0,0.001,0],[0,0,ahh**2]])
 
     h = np.array([[1,0,0],[0,1,0],[0,0,1]])
     cov_list2[i] = h @ cov_list[i] @ h.T + Q
@@ -246,13 +246,13 @@ def callback(data, args):
     l[0,0] = x[0,i]
     l[1,0] = x[1,i]
     l[2,0] = x[2,i]
-    nx = x +  np.random.normal(0, 0.05,l.shape)
+    nx = x +  np.random.normal(0, 0.1,l.shape)
 
 
 
     if firstFlag == 1:
-        p[0,i] = .0
-        p[1,i] = .0
+        p[0,i] = nx[0,0]
+        p[1,i] = nx[1,0]
         p[2,i] = .0
         firstFlag = 0
 
@@ -321,13 +321,16 @@ def pos_compare():
     ekf_xl = []
     ekf_yl = []
     # Sample data collection loop - replace with your actual data collection
-    for t in range(30):  # Loop for 100 updates (adjust as needed)
+    for t in range(35):  # Loop for 100 updates (adjust as needed)
         # Simulated data update - replace with actual data retrieval
-        ekf_xl.append(p[0,0])
-        ekf_yl.append(p[1,0]) 
+       # ekf_xl.append(p[0,0])
+        #ekf_yl.append(p[1,0]) 
         
         print(t) 
         ekf_x, ekf_y = p[0, 0], p[1, 0]  # Replace with EKF data retrieval
+        ekf_xl.append(ekf_x)
+        ekf_yl.append(ekf_y) 
+
         mocap_x, mocap_y = x[0, 0], x[1, 0]  # Replace with Motion Capture data retrieval
         nx_x, nx_y = nx[0,0], nx[1,0]
         # Update the plot
@@ -344,7 +347,7 @@ def pos_compare():
     ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='EKF Estimated  Position')
     ax.scatter(mocap_x, mocap_y, color='red', marker='x', label='Ground Truth Position')
     ax.scatter(nx_x, nx_y, color= 'green', marker='*', label = 'Noisy Observation')
-    for o in range(30):
+    for o in range(10):
         plt.text(ekf_xl[o], ekf_yl[o] ,str(o), color = 'red')
     index = index +1
     plt.ioff()
@@ -355,7 +358,7 @@ def pos_compare():
     print('save')
 
 def central():
-    rospy.Subscriber('/vrpn_client_node/Hus117' + '/pose', PoseStamped, callback, 0)
+    rospy.Subscriber('/vrpn_client_node/Hus188' + '/pose', PoseStamped, callback, 0)
 
     timer = rospy.Timer(rospy.Duration(0.05), control_callback)
     ekf_timer = rospy.Timer(rospy.Duration(0.06), ekf_update_function)
@@ -369,5 +372,3 @@ if __name__ == '__main__':
         central()
     except rospy.ROSInterruptException:
         print(rospy.ROSInterruptException)
-
- 
