@@ -62,12 +62,12 @@ safety_radius = 0.2
 barrier_gain = 1000
 projection_distance = 0.05
 magnitude_limit = 0.2
-confidence_level = 1.0
+confidence_level = 0.95
 
 cov_list = []
 cov_list2 = []
 for i in range(N):
-    cov = np.full((3, 3), 1.0, dtype=np.float64)
+    cov = np.full((3, 3), 0.0001, dtype=np.float64)
     cov_list.append(cov)
     cov_list2.append(cov)
 
@@ -110,9 +110,8 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
 
 			ca = np.cos(alpha)
 			sa = np.sin(alpha)
-
-
 			dxu[0, i] = gamma * e * ca
+#			print(alpha)
 			dxu[1, i] = k * alpha + gamma * ((ca * sa) / alpha) * (alpha + h * theta)
 
 		return dxu
@@ -271,10 +270,13 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
     return uni_to_si_dyn
 
 def trap_cdf_inv(a, c, delta):
-    
+    if a > 0.2:
+        a == 0.2
+    elif c > 0.2:
+        c == 0.2
     
   
-    sigma = 0.999
+    sigma = 1
     # returns list of b2, b1, sigma
     b2 = delta
     b1 = delta
@@ -306,35 +308,15 @@ def trap_cdf_inv(a, c, delta):
         b2 = b2 + delta  # apply shift here due to xi - xj
 
     else:  # than is trap
-        if sigma > area_vec[1]:  # right triangle area
-            b1 = (A + C) - 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
-            b2 = -(A + C) + 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
-
-            b1 = b1 + delta
-            b2 = b2 + delta  # apply shift here due to xi - xj
-
-        elif sigma > area_vec[0] and sigma <= area_vec[1]:  # in between the triangle part
-            b1 = -(A - C) + (sigma - area_vec[0]) / h  # assuming > 50%, then b1 should > 0
-            b2 = -b1
-
-            b1 = b1 + delta
-            b2 = b2 + delta  # apply shift here due to xi - xj
-
-            # note that b1 could be > or < b2, depending on whether sigma > or < .5
-
-        elif sigma <= area_vec[0]:
-            b1 = -(A + C) + 2 * C * np.sqrt(sigma / area_vec[0])  # assuming > 50%, then b1 should > 0
-            b2 = -b1
-
-            b1 = b1 + delta
-            b2 = b2 + delta  # apply shift here due to xi - xj
-
-        else:
-            print('first triangle, which is not allowed as long as we assume sigma > 50%')
-
+        b1 = (A + C) - 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
+        b2 = -(A + C) + 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
+        b1 = b1 + delta
+        b2 = b2 + delta  # apply shift here due to xi - xj
+    print(b1)
+    print('b1 above')
     return b2, b1, sigma
 
-def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, magnitude_limit=0.2, confidence_level=1.0):
+def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, magnitude_limit=0.2, confidence_level=0.95):
 
     def barrier_certificate(dxi, x):
         global URandSpan, XRandSpan, robotGaussianDistInfox, robotGaussianDistInfoy
@@ -360,12 +342,13 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, m
                 BB_y = -safety_radius ** 2 - 2 / gamma * max_dvij_y * max_dxij_y
                 #siwon added
                 z_value = stats.norm.ppf(1 - (1 - confidence_level) / 2) #if confidence level is 95% then z_value is about 1.96
-                XRandSpan[0, i] = robotGaussianDistInfox[0,i] - (z_value * robotGaussianDistInfox[1,i])
-                XRandSpan[0, j] = robotGaussianDistInfox[0,j] - (z_value * robotGaussianDistInfox[1,j])
-      
-                XRandSpan[1, i] = robotGaussianDistInfoy[0,i] - (z_value * robotGaussianDistInfoy[1,i])
-                XRandSpan[1, j] = robotGaussianDistInfoy[0,j] - (z_value * robotGaussianDistInfoy[1,j])
-                #until here
+                print(z_value)
+                XRandSpan[0, i] = (z_value * robotGaussianDistInfox[1,i])
+                XRandSpan[0, j] = (z_value * robotGaussianDistInfox[1,j])
+                #print(robotGaussianDistInfox[0,i]) 
+                XRandSpan[1, i] = (z_value * robotGaussianDistInfoy[1,i])
+                XRandSpan[1, j] = (z_value * robotGaussianDistInfoy[1,j])
+                #print(XRandSpan[0,i])
                 b2_x, b1_x, sigma = trap_cdf_inv(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j])
                 b2_y, b1_y, sigma = trap_cdf_inv(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j])
 
@@ -429,7 +412,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, m
 
 
 def create_pr_unicycle_barrier_certificate_cent(barrier_gain=100, safety_radius=0.12, projection_distance=0.05,
-                                                magnitude_limit=0.2, confidence_level=1.0):
+                                                magnitude_limit=0.2, confidence_level=0.95):
 
     # Check user input types
     assert isinstance(barrier_gain, (int,
@@ -655,6 +638,10 @@ def callback(data, args):
     l[1,0] = x[1,i]
     l[2,0] = x[2,i]
     nx = x +  np.random.normal(0, 0.1,l.shape)
+    if args == 1:
+        p[0,1] = data.pose.position.x
+        p[1,1] = data.pose.position.y
+        p[2,1] = theta
 
 
 
