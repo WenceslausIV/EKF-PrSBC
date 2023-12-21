@@ -270,50 +270,25 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
     return uni_to_si_dyn
 
 def find_b(a, c, delta):
-    if a > 0.2:
-        a == 0.2
-    elif c > 0.2:
-        c == 0.2
-    
-  
+
     sigma = 1
     # returns list of b2, b1, sigma
     b2 = delta
     b1 = delta
 
-    # a and c should be positive
-
-    if a > c:  # [-A, A] is the large one, and[-C, C] is the smaller one
-        A = a
-        C = c
-    else:
-        A = c
-        C = a
+    A = a
+    C = c
 
     if A == 0 and C == 0:
-        return b2, b1, sigma
+        return b2, b1
 
     # O_vec = [-(A + C), -(A - C), (A - C), (A + C)] # vector of vertices on the trap distribution cdf
 
-    h = 1 / (2 * A)  # height of the trap distribution
-    area_seq = [1 / 2 * 2 * C * h, 2 * (A - C) * h, 1 / 2 * 2 * C * h]
-    area_vec = [area_seq[0], sum(area_seq[:2])]
+    b1 = (A + C)
+    b2 = -(A + C)
+    b1 = b1 + delta
+    b2 = b2 + delta  # apply shift here due to xi - xj
 
-    if abs(A - C) < 1e-5:  # then is triangle
-        # assuming sigma > 50
-        b1 = (A + C) - 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))  # 1 - area_vec[1] should be very close to 0.5
-        b2 = -b1
-
-        b1 = b1 + delta
-        b2 = b2 + delta  # apply shift here due to xi - xj
-
-    else:  # than is trap
-        b1 = (A + C) - 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
-        b2 = -(A + C) + 2 * C * np.sqrt((1 - sigma) / (1 - area_vec[1]))
-        b1 = b1 + delta
-        b2 = b2 + delta  # apply shift here due to xi - xj
-    print(b1)
-    print('b1 above')
     return b2, b1
 
 def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, magnitude_limit=0.2, confidence_level=0.95):
