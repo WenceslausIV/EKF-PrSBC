@@ -271,8 +271,7 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
 
 def find_b(a, c, delta):
 
-    sigma = 1
-    # returns list of b2, b1, sigma
+
     b2 = delta
     b1 = delta
 
@@ -281,8 +280,6 @@ def find_b(a, c, delta):
 
     if A == 0 and C == 0:
         return b2, b1
-
-    # O_vec = [-(A + C), -(A - C), (A - C), (A + C)] # vector of vertices on the trap distribution cdf
 
     b1 = (A + C)
     b2 = -(A + C)
