@@ -269,7 +269,7 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
 
     return uni_to_si_dyn
 
-def trap_cdf_inv(a, c, delta):
+def find_b(a, c, delta):
     if a > 0.2:
         a == 0.2
     elif c > 0.2:
@@ -349,8 +349,8 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.2, m
                 XRandSpan[1, i] = (z_value * robotGaussianDistInfoy[1,i])
                 XRandSpan[1, j] = (z_value * robotGaussianDistInfoy[1,j])
                 #print(XRandSpan[0,i])
-                b2_x, b1_x, sigma = trap_cdf_inv(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j])
-                b2_y, b1_y, sigma = trap_cdf_inv(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j])
+                b2_x, b1_x, sigma = find_b(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j])
+                b2_y, b1_y, sigma = find_b(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j])
 
                 if (b2_x < 0 and b1_x > 0) or (b2_x > 0 and b1_x < 0):
                     # print('WARNING: distance between robots on x smaller than error bound!')
