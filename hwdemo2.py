@@ -33,7 +33,7 @@ x = np.zeros((3, N))
 limo_prev = [0,0,0]
 limodxu = np.array([[0],[0]])
 
-goal_points = np.array([[-1.0, 1.0, 1.0, -1.0, 0.], [-1.0, -1.0, 1.0, 1.0, 0.], [math.pi / 2, -math.pi / 2, math.pi, 0., 0.]])
+goal_points = np.array([[-0.8, 0.8, 0.8, -0.8, 0.], [-0.8, -0.8, 0.8, 0.8, 0.], [math.pi / 2, -math.pi / 2, math.pi, 0., 0.]])
 dxu = np.zeros((2, N))
 
 
