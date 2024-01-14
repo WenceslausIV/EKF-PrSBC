@@ -32,8 +32,8 @@ N = 4  # Number of robots
 x = np.zeros((3, N))
 limo_prev = [0,0,0]
 limo_curr = [0,0,0]
-limodxu = np.array([[0],[0]])
-
+limodxu = np.array([[0], [0]])
+limodxi = np.array([[0], [0]])
 goal_points = np.array([[-0.8, 0.8, 0.8, -0.8], [-0.8, -0.8, 0.8, 0.8], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
 
@@ -302,8 +302,11 @@ def create_single_integrator_barrier_certificate(barrier_gain=100, safety_radius
                 b[count] = barrier_gain * np.power(h, 3)
 
                 count += 1
-
+                
+        global limo_curr, limodxi
         for i in range(4):
+            limoerror = np.array([ [limo_curr[0] + limodxi[0,0]], [limo_curr[1] + limodxi[0,0]] ])
+            error = x[:, i] - limoerror
             h = (error[0] * error[0] + error[1] * error[1]) - np.power(0.5, 2)
             A[count, (2 * i, (2 * i + 1))] = -2 * error
             A[count, (2 * 4, (2 * 4 + 1))] = 2 * error
@@ -421,11 +424,11 @@ def control_callback(event):
 #        goal_points = np.array([[1, -1., -1., 1., 0.], [1,-1., 1., -1., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0., 0.]])
 
 def limo_vel_callback(event):
-    global limo_prev, limodxu
+    global limo_prev, limo_curr, limodxu, limodxi
     si_to_uni_dyn, uni_to_si_states = create_si_to_uni_mapping()
-    limoprevx = np.array([[ limo_prev[0], limo_prev[1], limo_prev[2] ]])
-    limox = np.array([[ limo_pcurr[0], limo_curr[1], limo_curr[2] ]])
-    limodxi = np.array([[ limox[0,0] - limoprevx[0,0], limox[0,1] - limoprevx[0,1]]])
+    limoprevx = np.array([ [limo_prev[0]], [limo_prev[1]], [limo_prev[2]] ])
+    limox = np.array([ [limo_curr[0]], [limo_curr[1]], [limo_curr[2]] ])
+    limodxi = np.array([ [limox[0,0] - limoprevx[0,0]], [limox[0,1] - limoprevx[0,1]] ])
     limodxu = si_to_uni_dyn(limodxi, limox)
 
 def central():
@@ -435,6 +438,7 @@ def central():
     rospy.Subscriber('/vrpn_client_node/Hus188' + '/pose', PoseStamped, callback, 3)
     rospy.Subscriber('/vrpn_client_node/Limo' + '/pose', PoseStamped, callback, 4)
     timer = rospy.Timer(rospy.Duration(0.05), control_callback)
+    timer = rospy.Timer(rospy.Duration(0.05), limo_vel_callback)
     rospy.spin()
 
 
