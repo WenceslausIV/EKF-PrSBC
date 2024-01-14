@@ -28,12 +28,13 @@ publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 rospy.sleep(2)
 twist = Twist()
 dt = 0.06
-N = 5  # Number of robots
+N = 4  # Number of robots
 x = np.zeros((3, N))
 limo_prev = [0,0,0]
+limo_curr = [0,0,0]
 limodxu = np.array([[0],[0]])
 
-goal_points = np.array([[-0.8, 0.8, 0.8, -0.8, 0.], [-0.8, -0.8, 0.8, 0.8, 0.], [math.pi / 2, -math.pi / 2, math.pi, 0., 0.]])
+goal_points = np.array([[-0.8, 0.8, 0.8, -0.8], [-0.8, -0.8, 0.8, 0.8], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
 
 
@@ -259,7 +260,7 @@ def create_single_integrator_barrier_certificate(barrier_gain=100, safety_radius
     assert barrier_gain > 0, "In the function create_single_integrator_barrier_certificate, the barrier gain (barrier_gain) must be positive. Recieved %r." % barrier_gain
     assert safety_radius >= 0.12, "In the function create_single_integrator_barrier_certificate, the safe distance between robots (safety_radius) must be greater than or equal to the diameter of the robot (0.12m) plus the distance to the look ahead point used in the diffeomorphism if that is being used. Recieved %r." % safety_radius
     assert magnitude_limit > 0, "In the function create_single_integrator_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be positive. Recieved %r." % magnitude_limit
-    assert magnitude_limit <= 0.2, "In the function create_single_integrator_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be less than the max speed of the robot (0.2m/s). Recieved %r." % magnitude_limit
+    assert magnitude_limit <= 0.4, "In the function create_single_integrator_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be less than the max speed of the robot (0.2m/s). Recieved %r." % magnitude_limit
 
     def f(dxi, x):
         # Check user input types
@@ -283,7 +284,9 @@ def create_single_integrator_barrier_certificate(barrier_gain=100, safety_radius
 
         # Initialize some variables for computational savings
         N = dxi.shape[1]
-        num_constraints = int(comb(N, 2))
+        #*******
+        num_constraints = int(comb(N, 2)) + 4
+        #*******
         A = np.zeros((num_constraints, 2 * N))
         b = np.zeros(num_constraints)
         H = sparse(matrix(2 * np.identity(2 * N)))
@@ -299,6 +302,14 @@ def create_single_integrator_barrier_certificate(barrier_gain=100, safety_radius
                 b[count] = barrier_gain * np.power(h, 3)
 
                 count += 1
+
+        for i in range(4):
+            h = (error[0] * error[0] + error[1] * error[1]) - np.power(0.5, 2)
+            A[count, (2 * i, (2 * i + 1))] = -2 * error
+            A[count, (2 * 4, (2 * 4 + 1))] = 2 * error
+            b[count] = barrier_gain * np.power(h, 3)
+            count += 1
+            
 
         # Threshold control inputs before QP
         norms = np.linalg.norm(dxi, 2, 0)
@@ -335,7 +346,7 @@ def create_unicycle_barrier_certificate(barrier_gain=100, safety_radius=0.15, pr
     assert safety_radius >= 0.12, "In the function create_unicycle_barrier_certificate, the safe distance between robots (safety_radius) must be greater than or equal to the diameter of the robot (0.12m). Recieved %r." % safety_radius
     assert projection_distance > 0, "In the function create_unicycle_barrier_certificate, the projected point distance for the diffeomorphism between sinlge integrator and unicycle (projection_distance) must be positive. Recieved %r." % projection_distance
     assert magnitude_limit > 0, "In the function create_unicycle_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be positive. Recieved %r." % magnitude_limit
-    assert magnitude_limit <= 0.2, "In the function create_unicycle_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be less than the max speed of the robot (0.2m/s). Recieved %r." % magnitude_limit
+    assert magnitude_limit <= 0.4, "In the function create_unicycle_barrier_certificate, the maximum linear velocity of the robot (magnitude_limit) must be less than the max speed of the robot (0.2m/s). Recieved %r." % magnitude_limit
 
 
     si_barrier_cert = create_single_integrator_barrier_certificate(barrier_gain=barrier_gain, safety_radius=safety_radius+projection_distance)
@@ -367,32 +378,35 @@ def create_unicycle_barrier_certificate(barrier_gain=100, safety_radius=0.15, pr
 
 
 unicycle_position_controller = create_clf_unicycle_pose_controller()
-unicycle_barrier_cert =  create_unicycle_barrier_certificate(safety_radius = 0.4)
+unicycle_barrier_cert =  create_unicycle_barrier_certificate(safety_radius = 0.3)
 
 
 def callback(data, args):
-    global x, limo_prev
+    global x, limo_prev, limo_curr
     i = args
 
     # do i have to wrap the angle?
     theta = tf_conversions.transformations.euler_from_quaternion(
         [data.pose.orientation.x, data.pose.orientation.y, data.pose.orientation.z, data.pose.orientation.w])[2]
 
-    x[0, i] = data.pose.position.x
-    x[1, i] = data.pose.position.y
-    x[2, i] = theta
     if args == 4:
-        limo_prev[0] = data.pose.position.x
-        limo_prev[1] = data.pose.position.y
-        limo_prev[2] = theta
+        limo_prev[0] = limo_curr[0]
+        limo_prev[1] = limo_curr[1]
+        limo_prev[2] = limo_curr[2]
+        limo_curr[0] = data.pose.position.x
+        limo_curr[1] = data.pose.position.y
+        limo_curr[2] = theta
+
+    else:
+        x[0, i] = data.pose.position.x
+        x[1, i] = data.pose.position.y
+        x[2, i] = theta
 
 
 
 def control_callback(event):
     global dxu, goal_points, limodxu
     dxu = unicycle_position_controller(x, goal_points) / 10
-    dxu[0,4] = limodxu[0,0]
-    dxu[1,4] = limodxu[1,0]
     dxu = unicycle_barrier_cert(dxu, x)
     twist.linear.x = dxu[0, 1]
     twist.linear.y = 0.0
@@ -403,14 +417,14 @@ def control_callback(event):
     publisher.publish(twist)
     d = np.sqrt((goal_points[0][:4] - x[0][:4]) ** 2 + (goal_points[1][:4] - x[1][:4]) ** 2)
     if (d < .7).all():
-        goal_points = goal_points[:, [1, 2, 3, 0, 4]]
+        goal_points = goal_points[:, [1, 2, 3, 0]]
 #        goal_points = np.array([[1, -1., -1., 1., 0.], [1,-1., 1., -1., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0., 0.]])
 
 def limo_vel_callback(event):
     global limo_prev, limodxu
     si_to_uni_dyn, uni_to_si_states = create_si_to_uni_mapping()
     limoprevx = np.array([[ limo_prev[0], limo_prev[1], limo_prev[2] ]])
-    limox = np.array([[ x[0,4], x[1,4], x[2,4] ]])
+    limox = np.array([[ limo_pcurr[0], limo_curr[1], limo_curr[2] ]])
     limodxi = np.array([[ limox[0,0] - limoprevx[0,0], limox[0,1] - limoprevx[0,1]]])
     limodxu = si_to_uni_dyn(limodxi, limox)
 
