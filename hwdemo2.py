@@ -305,7 +305,7 @@ def create_single_integrator_barrier_certificate(barrier_gain=100, safety_radius
                 
         global limo_curr, limodxi
         for i in range(4):
-            limoerror = np.array([ [limo_curr[0] + limodxi[0,0]], [limo_curr[1] + limodxi[0,0]] ])
+            limoerror = np.array([ [limo_curr[0] + limodxi[0,0]], [limo_curr[1] + limodxi[1,0]] ])
             error = x[:, i] - limoerror
             h = (error[0] * error[0] + error[1] * error[1]) - np.power(0.5, 2)
             A[count, (2 * i, (2 * i + 1))] = -2 * error
