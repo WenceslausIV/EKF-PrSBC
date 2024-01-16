@@ -544,6 +544,7 @@ def callback(data, args):
     x[0, i] = data.pose.position.x
     x[1, i] = data.pose.position.y
     x[2, i] = theta
+    print(x)
     
 
 def control_callback(event):
