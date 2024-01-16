@@ -23,6 +23,7 @@ import numpy as np
 from scipy.special import comb
 from geometry_msgs.msg import TransformStamped, PoseStamped, Twist
 
+publisherr = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 rospy.sleep(2)
 twist = Twist()
 dt = 0.06
@@ -486,7 +487,7 @@ unicycle_position_controller = create_clf_unicycle_pose_controller()
 uni_barrier_cert = create_unicycle_barrier_certificate_with_boundary(barrier_gain=100, safety_radius=0.2, projection_distance=0.05, magnitude_limit=0.2, boundary_points = boundary_points)
 
     def run(self):
-        twist = Twist()
+        global twist
         while not self.done:
             self.condition.acquire()
             # Wait for a new message or timeout.
@@ -502,8 +503,7 @@ uni_barrier_cert = create_unicycle_barrier_certificate_with_boundary(barrier_gai
             '''
             tdxu[0,0] = self.x * self.speed
             tdxu[1,0] = self.th * self.turn
-            dxu = uni_barrier_cert(tdxu, x)
-            twist.linear.x = 
+            
             self.condition.release()
 
             # Publish.
@@ -545,10 +545,17 @@ def callback(data, args):
     x[1, i] = data.pose.position.y
     x[2, i] = theta
     
-force_on = 0
+
 def control_callback(event):
-    dxu = unicycle_barrier_cert(tdxu, x)
-    
+    global twist
+    dxu = uni_barrier_cert(tdxu, x)
+    twist.linear.x = dxu[0, 0]
+    twist.linear.y = 0.0
+    twist.linear.z = 0.0
+    twist.angular.x = 0
+    twist.angular.y = 0
+    twist.angular.z = dxu[1, 0]
+    publisherr.publish(twist)
     
 
 def central():
@@ -577,6 +584,7 @@ if __name__=="__main__":
     status = 0
 
     try:
+        central()
         pub_thread.wait_for_subscribers()
         pub_thread.update(x, y, z, th, speed, turn)
 
@@ -584,6 +592,7 @@ if __name__=="__main__":
         print(vels(speed,turn))
         while(1):
             key = getKey(key_timeout)
+            
             if key in moveBindings.keys():
                 x = moveBindings[key][0]
                 y = moveBindings[key][1]
