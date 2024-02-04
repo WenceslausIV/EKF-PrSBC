@@ -309,7 +309,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 #extract x distribution and replace x distribution below
                 twobytwo_cov = np.array([ [ cov_list[i][0][0], cov_list[i][0][1] ], [ cov_list[i][1][0], cov_list[i][1][1] ] ])
                 eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
-                major_axis_length_i = 2 * np.max(eigenvalues)
+                major_axis_length_i = 2 * np.sqrt(np.max(eigenvalues))
 
                 #major_axis_length_i = 0
 
@@ -321,7 +321,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 #currently using i's cov for robot j
                 twobytwo_cov = np.array([ [ cov_list[i][0][0], cov_list[i][0][1] ], [ cov_list[i][1][0], cov_list[i][1][1] ] ])
                 eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
-                major_axis_length_j = 2 * np.max(eigenvalues)
+                major_axis_length_j = 2 * np.sqrt(np.max(eigenvalues))
 
                 #major_axis_length_j = 0
 
