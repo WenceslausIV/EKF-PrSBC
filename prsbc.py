@@ -307,7 +307,8 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
 
                 #now modify this code, find the ellipse's longest diameter, make a circle, now x and y are independent
                 #extract x distribution and replace x distribution below
-                eigenvalues, eigenvectors = np.linalg.eig(cov_list[i])
+                twobytwo_cov = np.array([ [ cov_list[i][0][0], cov_list[i][0][1] ], [ cov_list[i][1][0], cov_list[i][1][1] ] ])
+                eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
                 major_axis_length_i = 2 * np.max(eigenvalues)
 
                 #major_axis_length_i = 0
@@ -316,8 +317,10 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 circle_i_std = circle_i_r
                 #if (circle_i_r > 1):
                 #    circle_i_std = 0.0000001
-              
-                eigenvalues, eigenvectors = np.linalg.eig(cov_list[i])       #in the future change to j
+
+                #currently using i's cov for robot j
+                twobytwo_cov = np.array([ [ cov_list[i][0][0], cov_list[i][0][1] ], [ cov_list[i][1][0], cov_list[i][1][1] ] ])
+                eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
                 major_axis_length_j = 2 * np.max(eigenvalues)
 
                 #major_axis_length_j = 0
@@ -328,7 +331,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 #    circle_j_std = 0.0000001
                 print("circle i and j", circle_i_r, circle_j_r)
                 new_gaus_std = np.sqrt((circle_i_std ** 2) + (circle_j_std**2))
-                b1_x = math.sqrt(new_gaus_std) * z_value
+                b1_x = ew_gaus_std * z_value
                 
                 b1_y = b1_x
                 b2_y = -b1_y
