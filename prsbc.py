@@ -331,7 +331,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 #    circle_j_std = 0.0000001
                 print("circle i and j", circle_i_r, circle_j_r)
                 new_gaus_std = np.sqrt((circle_i_std ** 2) + (circle_j_std**2))
-                b1_x = ew_gaus_std * z_value
+                b1_x = new_gaus_std * z_value
                 
                 b1_y = b1_x
                 b2_y = -b1_y
