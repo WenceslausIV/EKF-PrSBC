@@ -30,12 +30,14 @@ import itertools
 import numpy as np
 from geometry_msgs.msg import TransformStamped, PoseStamped, Twist
 from std_msgs.msg import Float64MultiArray
+from matplotlib.patches import Circle
 
 rospy.init_node('teleop_twist_keyboard')
 publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 array_pub = rospy.Publisher('mean_std_array_0', Float64MultiArray, queue_size=1)
 array_msg = Float64MultiArray()
 array_msg.data = [0, 0]
+
 
 rospy.sleep(2)
 twist = Twist()
@@ -48,9 +50,11 @@ nx = np.array([[0], [0], [0]])
 # goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
 dxi = np.zeros((2, N))
-goal_points = np.array([[-3.0, .0], [0., 0.], [math.pi / 2, -math.pi / 2]])
+goal_points = np.array([[0., 0.], [-2.0, 0.], [math.pi / 2, -math.pi / 2]])
 
 p = np.zeros((3, N))
+
+
 URandSpan = 0.01 * np.ones((2, N))  # setting up velocity error range for each robot
 
 x_rand_span_x = 0. * np.random.rand(1, N)  # setting up position error range for each robot,
@@ -60,16 +64,17 @@ XRandSpan = np.concatenate((x_rand_span_x, x_rand_span_y))
 Kp = 10
 Vmax = 200
 Wmax = np.pi
-safety_radius = 0.3
+safety_radius = 0.2
 barrier_gain = 1000
 projection_distance = 0.05
 magnitude_limit = 0.2
-confidence_level = 0.7
+confidence_level = 0.9
 
+circlelist = []
 cov_list = []
 cov_list2 = []
 for i in range(N):
-    cov = np.full((3, 3), 0.00001, dtype=np.float64)
+    cov = np.full((3, 3), 0.01, dtype=np.float64)
     cov_list.append(cov)
     cov_list2.append(cov)
 
@@ -279,7 +284,7 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
 def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, magnitude_limit=0.2,
                                                  confidence_level=0.9):
     def barrier_certificate(dxi, x):
-        global URandSpan, XRandSpan, robotGaussianDistInfox, robotGaussianDistInfoy
+        global URandSpan, XRandSpan, robotGaussianDistInfox, robotGaussianDistInfoy, circlelist
 
         num_constraints = int(comb(N, 2))
         A = np.zeros((num_constraints, 2 * N))
@@ -298,7 +303,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 max_dvij_y = np.linalg.norm(URandSpan[1, i] + URandSpan[1, j])
                 max_dxij_x = np.linalg.norm(p[0, i] - p[0, j]) + np.linalg.norm(XRandSpan[0, i] + XRandSpan[0, j])
                 max_dxij_y = np.linalg.norm(p[1, i] - p[1, j]) + np.linalg.norm(XRandSpan[1, i] + XRandSpan[1, j])
-
+                #print(cov_list[i][0][0])
 
                 #BB_x = -safety_radius ** 2 - 2 / gamma * max_dvij_x * max_dxij_x
                 #BB_y = -safety_radius ** 2 - 2 / gamma * max_dvij_y * max_dxij_y
@@ -315,6 +320,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
 
                 circle_i_r = major_axis_length_i / 2
                 circle_i_std = circle_i_r
+                circlelist.append(circle_i_std)
                 #if (circle_i_r > 1):
                 #    circle_i_std = 0.0000001
 
@@ -327,12 +333,14 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
 
                 circle_j_r = major_axis_length_j / 2
                 circle_j_std = circle_j_r 
+                circle_j_std = 0
                 #if (circle_j_r > 1):
                 #    circle_j_std = 0.0000001
-                print("circle i and j", circle_i_r, circle_j_r)
+                #print("circle i and j", circle_i_std, circle_j_std)
                 new_gaus_std = np.sqrt((circle_i_std ** 2) + (circle_j_std**2))
                 b1_x = new_gaus_std * z_value
-                
+                print(b1_x)
+                #b1_x = 0
                 b1_y = b1_x
                 b2_y = -b1_y
  
@@ -342,6 +350,12 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
 
                 b1_y = b1_y + (p[1, i] - p[1, j])
                 b2_y = b2_y + (p[1, i] - p[1, j])
+                '''
+                b1_x = 0.03
+                b2_x = -0.03
+                b1_y = 0.03
+                b2_y = -0.03
+                '''
                 '''
                 b2_x, b1_x = find_b(XRandSpan[0, i], XRandSpan[0, j], x[0, i] - x[0, j])
                 b2_y, b1_y = find_b(XRandSpan[1, i], XRandSpan[1, j], x[1, i] - x[1, j])
@@ -577,7 +591,7 @@ def updateCov(i, p, dt):
     global cov_list, m
     g = getG(i, p, dt)
     v = getV(i, p, dt)
-    ahh = 10
+    ahh = 0.05
     # set velocity noise covariance CHANGE LATER!!!
     m = np.array([[ahh * (dxu[0, i]), 0], [0, ahh * (dxu[1, i])]])
     cov_list[i] = g @ cov_list[i] @ g.T + v @ m @ v.T
@@ -586,9 +600,9 @@ def updateCov(i, p, dt):
 
 def update_cov2(i):
     global cov_list, cov_list2
-    ahh = 0.02
+    ahh = 0.01
     # set camera measurement noise covariance CHANGE LATER!!!
-    Q = np.array([[0.001, 0, 0], [0, 0.001, 0], [0, 0, ahh ** 2]])
+    Q = np.array([[0.001, 0, 0], [0, 0.001, 0], [0.001, 0, 0]])
 
     h = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     cov_list2[i] = h @ cov_list[i] @ h.T + Q
@@ -596,7 +610,7 @@ def update_cov2(i):
 
 
 def predict(i):
-    global p, cov, dt
+    global p, cov_list, dt
 
     p = transition_model(i, p, dt)
     cov_list[i] = updateCov(i, p, dt)
@@ -622,7 +636,98 @@ def measure(i):
 uni_controller = create_clf_unicycle_pose_controller()
 uni_barrier_cert = create_pr_unicycle_barrier_certificate_cent(safety_radius=safety_radius,
                                                                confidence_level=confidence_level)
+'''
+def pos_compare():
+   # global index
+    index = 0 
+    print("hello")
+    plt.ion()
+    fig, ax = plt.subplots(figsize=(10, 6))
+    plt.xlim(-3.0,3.0)
+    plt.ylim(-3.0,3.0)
 
+    ax.set_xlabel('X Position')
+    ax.set_ylabel('Y Position')
+    ax.set_title('EKF Figure')
+    print('*****************************')
+    ekf_xl = []
+    ekf_yl = []
+    # Sample data collection loop - replace with your actual data collection
+    for t in range(30):  # Loop for 100 updates (adjust as needed)
+        # Simulated data update - replace with actual data retrieval
+        ekf_xl.append(p[0,0])
+        ekf_yl.append(p[1,0]) 
+
+        print(t) 
+        ekf_x, ekf_y = p[0, 0], p[1, 0]  # Replace with EKF data retrieval
+        mocap_x, mocap_y = x[0, 0], x[1, 0]  # Replace with Motion Capture data retrieval
+        nx_x, nx_y = nx[0,0], nx[1,0]
+        # Update the plot
+        #ax.clear()
+        ax.scatter(ekf_x, ekf_y, color='black', marker='o')
+        ax.scatter(mocap_x, mocap_y, color='red', marker='x')
+        ax.scatter(nx_x, nx_y, color= 'green', marker='*')
+       # ax.legend()
+        print(t)
+        # Draw the new plot
+        #fig.canvas.draw()
+        #fig.canvas.flush_events()
+       # time.sleep(0.5)  # Delay for demonstration, adjust as needed
+    ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='EKF Estimated  Position')
+    ax.scatter(mocap_x, mocap_y, color='red', marker='x', label='Ground Truth Position')
+    ax.scatter(nx_x, nx_y, color= 'green', marker='*', label = 'Noisy Observation')
+    for o in range(30):
+        plt.text(ekf_xl[o], ekf_yl[o] ,str(o), color = 'red')
+    index = index +1
+    plt.ioff()
+    filename = '/opt/ros/noetic/lib/teleop_twist_keyboard/{}.png'.format(index)
+
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename)
+    print('save')
+'''
+
+def show_circle():
+    global circlelist
+    # global index
+    index = 0
+    print("hello")
+    plt.ion()
+    
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    plt.xlim(-1.0, 41.0)
+    plt.ylim(-0.1, 0.1)
+
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Circle')
+    ax.set_title('Circle over time figure')
+    print('*****************************')
+    ekf_xl = []
+    ekf_yl = []
+    for t in range(400):  # Loop for 100 updates (adjust as needed)
+
+        print(t)
+        radius = circlelist[t]
+        center = (t*0.1,0)
+        if t % 2 == 0:
+            circle = Circle(center, radius, edgecolor='b', facecolor='none')
+            ax.add_patch(circle)
+
+    #ax.set_aspect('equal', adjustable='box')
+
+    #ax.scatter(ekf_x, ekf_y, color='black', marker='o', label='x variance over time')
+
+
+    index = index + 1
+    plt.ioff()
+    filename = '/opt/ros/noetic/lib/teleop_twist_keyboard/{}.png'.format(index)
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename)
+    print('save')
 
 def callback(data, args):
     global firstFlag, x, p, nx
@@ -640,16 +745,16 @@ def callback(data, args):
     l[1, 0] = x[1, i]
     l[2, 0] = x[2, i]
     nx = x + np.random.normal(0, 0.1, l.shape)
-    
+    nx[2,i] = x[2,i] 
     if args == 1:
         p[0, 1] = data.pose.position.x
         p[1, 1] = data.pose.position.y
         p[2, 1] = theta
     
-    if firstFlag == 1:
-        p[0, i] = nx[0, 0]
-        p[1, i] = nx[1, 0]
-        p[2, i] = .0
+    if firstFlag == 1 and args == 0:
+        p[0, 0] = nx[0, 0]
+        p[1, 0] = nx[1, 0]
+        p[2, 0] = x[2,0]
         firstFlag = 0
 
 
@@ -663,11 +768,13 @@ def control_callback(event):
     twist.linear.z = 0.0
     twist.angular.x = 0
     twist.angular.y = 0
-    twist.angular.z = dxu[1, 0]/5
+    twist.angular.z = dxu[1, 0]
     publisher.publish(twist)
     # predict(0)
     # measure(0)
     # print(p)
+    #if len(circlelist) == 400:
+    #    show_circle()
 
 
 def ekf_update_function(event):
@@ -695,9 +802,9 @@ def central():
     rospy.Subscriber('/vrpn_client_node/Hus137' + '/pose', PoseStamped, callback, 1)
 
     timer = rospy.Timer(rospy.Duration(0.05), control_callback)
-    ekf_timer = rospy.Timer(rospy.Duration(0.06), ekf_update_function)
-    # pos_compare_timer = rospy.Timer(rospy.Duration(50), pos_compare)
-    # pos_compare()
+    ekf_timer = rospy.Timer(rospy.Duration(0.05), ekf_update_function)
+    #pos_compare_timer = rospy.Timer(rospy.Duration(50), pos_compare)
+    #pos_compare()
     rospy.spin()
 
 
