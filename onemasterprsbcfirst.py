@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-#one master prsbc before experiment, written at home
 from __future__ import print_function
 import matplotlib.pyplot as plt
 import matplotlib
@@ -49,15 +47,14 @@ twist137 = Twist()
 dt = 0.06
 N = 2  # Number of robots
 x = np.zeros((3, N))
-
+p = np.zeros((3, N))
 nx = np.zeros((3, N))
 
 # goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
 dxi = np.zeros((2, N))
-goal_points = np.array([[0., 0.], [-2.0, 0.], [math.pi / 2, -math.pi / 2]])
+goal_points = np.array([[2.0, 0.], [-2.0, 0.], [math.pi / 2, -math.pi / 2]])
 
-p = np.zeros((3, N))
 
 
 URandSpan = 0.01 * np.ones((2, N))  # setting up velocity error range for each robot
@@ -78,10 +75,12 @@ confidence_level = 0.9
 circlelist = []
 cov_list = []
 cov_list2 = []
+firstFlag = []
 for i in range(N):
     cov = np.full((3, 3), 0.01, dtype=np.float64)
     cov_list.append(cov)
     cov_list2.append(cov)
+    firstFlag.append(1)
 
 # *****************************fix cov later for robot 1*****************
 robotGaussianDistInfox = np.array([[p[0, 0], p[0, 1]], [math.sqrt(abs(cov_list[0][0, 0])), math.sqrt(
@@ -89,7 +88,6 @@ robotGaussianDistInfox = np.array([[p[0, 0], p[0, 1]], [math.sqrt(abs(cov_list[0
 robotGaussianDistInfoy = np.array([[p[1, 0], p[1, 1]], [math.sqrt(abs(cov_list[0][1, 1])), math.sqrt(
     abs(cov_list[0][1, 1]))]])  # all the robots' y pos distribution info including mean and std
 
-firstFlag = 1
 
 
 def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gain=2.7, rotation_error_gain=0.3):
@@ -701,12 +699,8 @@ def callback(data, args):
     #cancel noise for theta
     noise[2, :] = 0
     nx = x + noise
-    if args == 1:
-        p[0, 1] = data.pose.position.x
-        p[1, 1] = data.pose.position.y
-        p[2, 1] = theta
-    
-    if firstFlag == 1 and args == 0:
+
+    if firstFlag[i] == 1:
         p[0, 0] = nx[0, 0]
         p[1, 0] = nx[1, 0]
         p[2, 0] = x[2,0]
