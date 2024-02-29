@@ -689,10 +689,14 @@ def callback(data, args):
     x[1, i] = data.pose.position.y
     x[2, i] = theta
 
-    noise = np.random.normal(0, 0.1, x.shape)
+    l = np.array([ [0],[0],[0] ])
+
+    noise = np.random.normal(0, 0.1, l.shape)
     #cancel noise for theta
-    noise[2, :] = 0
-    nx = x + noise
+    noise[2, 0] = 0
+    nx[0, i] = x[0, i] + noise[0,0]
+    nx[1, i] = x[1, i] + noise[1,0]
+    nx[2, i] = x[2, i] + noise[2,0]
 
     if firstFlag[i] == 1:
         p[0, 0] = nx[0, 0]
