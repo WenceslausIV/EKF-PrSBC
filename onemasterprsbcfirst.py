@@ -83,13 +83,6 @@ for i in range(N):
     cov_list2.append(cov)
     firstFlag.append(1)
 
-# *****************************fix cov later for robot 1*****************
-robotGaussianDistInfox = np.array([[p[0, 0], p[0, 1]], [math.sqrt(abs(cov_list[0][0, 0])), math.sqrt(
-    abs(cov_list[0][0, 0]))]])  # all the robots' x pos distribution info including mean and std
-robotGaussianDistInfoy = np.array([[p[1, 0], p[1, 1]], [math.sqrt(abs(cov_list[0][1, 1])), math.sqrt(
-    abs(cov_list[0][1, 1]))]])  # all the robots' y pos distribution info including mean and std
-
-
 
 def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gain=2.7, rotation_error_gain=0.3):
     """Returns a controller ($u: \mathbf{R}^{3 \times N} \times \mathbf{R}^{3 \times N} \to \mathbf{R}^{2 \times N}$)
@@ -288,7 +281,7 @@ def create_uni_to_si_dynamics(projection_distance=0.05):
 def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, magnitude_limit=0.2,
                                                  confidence_level=0.9):
     def barrier_certificate(dxi, x):
-        global URandSpan, XRandSpan, robotGaussianDistInfox, robotGaussianDistInfoy, circlelist
+        global URandSpan, XRandSpan, circlelist
 
         num_constraints = int(comb(N, 2))
         A = np.zeros((num_constraints, 2 * N))
