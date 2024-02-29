@@ -53,6 +53,7 @@ nx = np.zeros((3, N))
 # goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
 dxi = np.zeros((2, N))
+# change below line according to your N and its goals
 goal_points = np.array([[2.0, 0.], [-2.0, 0.], [math.pi / 2, -math.pi / 2]])
 
 
