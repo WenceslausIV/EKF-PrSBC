@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+#one master prsbc before experiment, written at home
 from __future__ import print_function
 import matplotlib.pyplot as plt
 import matplotlib
