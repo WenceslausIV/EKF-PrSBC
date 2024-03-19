@@ -64,6 +64,10 @@ circle0_list = []
 circle1_list = []
 circle2_list = []
 circle3_list = []
+cov_per_list0 = []
+cov_per_list1 = []
+cov_per_list2 = []
+cov_per_list3 = []
 
 
 # goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
@@ -633,6 +637,7 @@ def measure(i):
     p[2, i] = t[2, 0]
     eye = np.eye(3, dtype=float)
     cov_list[i] = (eye - K @ h) @ cov_list[i]
+    return cov_list[i]
     
     
 
@@ -693,22 +698,62 @@ def pos_compare():
         
         # Update scatter plots for current frame
         ax.scatter(pp_list[frame][0, 0], pp_list[frame][1, 0], color='black', marker='o')
+        ax.scatter(pp_list[frame][0, 1], pp_list[frame][1, 1], color='black', marker='o')
+        ax.scatter(pp_list[frame][0, 2], pp_list[frame][1, 2], color='black', marker='o')
+        ax.scatter(pp_list[frame][0, 3], pp_list[frame][1, 3], color='black', marker='o')
         
-        twobytwo_cov = np.array([[cov_list[0][0][0], cov_list[0][0][1]], [cov_list[0][1][0], cov_list[0][1][1]]])
+        twobytwo_cov = np.array([[cov_per_list0[frame][0][0], cov_per_list0[frame][0][1]], [cov_per_list0[frame][1][0], cov_per_list0[frame][1][1]]])
         eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
         major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
         circle_0_r = major_axis_length_0 / 2
-        radius = circle_0_r
+        radius0 = circle_0_r
         
-        circle = patches.Circle((pp_list[0][0, 0], pp_list[1][0, 0]), radius, fill=False, color='black')
-        ax.add_patch(circle)
+        circle0 = patches.Circle((pp_list[frame][0, 0], pp_list[frame][1, 0]), radius0, fill=False, color='black')
+        ax.add_patch(circle0)
+
+        twobytwo_cov = np.array([[cov_per_list1[frame][0][0], cov_per_list1[frame][0][1]], [cov_per_list1[frame][1][0], cov_per_list1[frame][1][1]]])
+        eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
+        major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
+        circle_1_r = major_axis_length_0 / 2
+        radius1 = circle_1_r
+
+        circle1 = patches.Circle((pp_list[frame][0, 1], pp_list[frame][1, 1]), radius1, fill=False, color='black')
+        ax.add_patch(circle1)
+
+        twobytwo_cov = np.array([[cov_per_list2[frame][0][0], cov_per_list2[frame][0][1]], [cov_per_list2[frame][1][0], cov_per_list2[frame][1][1]]])
+        eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
+        major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
+        circle_2_r = major_axis_length_0 / 2
+        radius2 = circle_2_r
+
+        circle2 = patches.Circle((pp_list[frame][0, 2], pp_list[frame][1, 2]), radius2, fill=False, color='black')
+        ax.add_patch(circle2)
+
+        twobytwo_cov = np.array([[cov_per_list3[frame][0][0], cov_per_list3[frame][0][1]], [cov_per_list3[frame][1][0], cov_per_list3[frame][1][1]]])
+        eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
+        major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
+        circle_3_r = major_axis_length_0 / 2
+        radius3 = circle_3_r
+
+        circle3 = patches.Circle((pp_list[frame][0, 3], pp_list[frame][1, 3]), radius3, fill=False, color='black')
+        ax.add_patch(circle3)
+
         
         ax.scatter(gt_list[frame][0, 0], gt_list[frame][1, 0], color='red', marker='x')
         ax.scatter(np_list[frame][0, 0], np_list[frame][1, 0], color='green', marker='*')
+
+        ax.scatter(gt_list[frame][0, 1], gt_list[frame][1, 1], color='red', marker='x')
+        ax.scatter(np_list[frame][0, 1], np_list[frame][1, 1], color='green', marker='*')
+
+        ax.scatter(gt_list[frame][0, 2], gt_list[frame][1, 2], color='red', marker='x')
+        ax.scatter(np_list[frame][0, 2], np_list[frame][1, 2], color='green', marker='*')
+
+        ax.scatter(gt_list[frame][0, 3], gt_list[frame][1, 3], color='red', marker='x')
+        ax.scatter(np_list[frame][0, 3], np_list[frame][1, 3], color='green', marker='*')
     
         # Legend and grid
-        ax.legend(['EKF Estimated Position', 'Ground Truth Position', 'Noisy Observation'])
-        ax.grid(True)
+    ax.legend(['EKF Estimated Position', 'Ground Truth Position', 'Noisy Observation'])
+    ax.grid(True)
 
     anim = FuncAnimation(fig, update, frames=range(100), interval=50)
     anim.save('animation.mp4', fps=5, extra_args=['-vcodec', 'libx264'])
@@ -768,20 +813,20 @@ def control_callback(event):
 
 def ekf_update_function131(event):
     predict(0)
-    measure(0)
+    cov_per_list0.append(measure(0))
 
 
 def ekf_update_function139(event):
     predict(1)
-    measure(1)
+    cov_per_list1.append(measure(1))
 
 def ekf_update_function188(event):
     predict(2)
-    measure(2)
+    cov_per_list2.append(measure(2))
 
 def ekf_update_function138(event):
     predict(3)
-    measure(3)
+    cov_per_list3.append(measure(3))
 
 
 def central():
