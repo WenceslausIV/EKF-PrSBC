@@ -56,7 +56,7 @@ p = np.zeros((3, N))
 nx = np.zeros((3, N))
 
 plotFlag = 0
-#groudtruth, predicted position, noisy position
+# groudtruth, predicted position, noisy position
 gt_list = []
 pp_list = []
 np_list = []
@@ -68,7 +68,6 @@ cov_per_list0 = []
 cov_per_list1 = []
 cov_per_list2 = []
 cov_per_list3 = []
-
 
 # goal_points = np.array([[0., 0., 1., -1.], [-1., 1., 0., 0.], [math.pi / 2, -math.pi / 2, math.pi, 0.]])
 dxu = np.zeros((2, N))
@@ -91,7 +90,6 @@ projection_distance = 0.05
 magnitude_limit = 0.2
 confidence_level = 0.9
 
-
 cov_list = []
 cov_list2 = []
 firstFlag = []
@@ -100,6 +98,7 @@ for i in range(N):
     cov_list.append(cov)
     cov_list2.append(cov)
     firstFlag.append(1)
+
 
 def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gain=2.7, rotation_error_gain=0.3):
     """Returns a controller ($u: \mathbf{R}^{3 \times N} \times \mathbf{R}^{3 \times N} \to \mathbf{R}^{2 \times N}$)
@@ -135,9 +134,9 @@ def create_clf_unicycle_pose_controller(approach_angle_gain=1, desired_angle_gai
             ca = np.cos(alpha)
             sa = np.sin(alpha)
             dxu[0, i] = gamma * e * ca
-            print(alpha)
-            print(k)
-            print(gamma)
+            #print(alpha)
+            #print(k)
+            #print(gamma)
             dxu[1, i] = k * alpha + gamma * ((ca * sa) / alpha) * (alpha + h * theta)
 
         return dxu
@@ -327,7 +326,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                     [[cov_list[i][0][0], cov_list[i][0][1]], [cov_list[i][1][0], cov_list[i][1][1]]])
 
                 eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
-                #print(twobytwo_cov)
+                # print(twobytwo_cov)
                 major_axis_length_i = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
 
                 # major_axis_length_i = 0
@@ -349,7 +348,7 @@ def create_si_pr_barrier_certificate_centralized(gamma=100, safety_radius=0.3, m
                 new_gaus_std = np.sqrt((circle_i_std ** 2) + (circle_j_std ** 2))
                 b1_x = new_gaus_std * z_value
 
-                print(b1_x)
+                #print(b1_x)
 
                 b1_y = b1_x
                 b2_y = -b1_y
@@ -638,13 +637,12 @@ def measure(i):
     eye = np.eye(3, dtype=float)
     cov_list[i] = (eye - K @ h) @ cov_list[i]
     return cov_list[i]
-    
-    
 
 
 uni_controller = create_clf_unicycle_pose_controller()
 uni_barrier_cert = create_pr_unicycle_barrier_certificate_cent(safety_radius=safety_radius,
                                                                confidence_level=confidence_level)
+
 
 def callback(data, args):
     global firstFlag, x, nx, p
@@ -657,8 +655,7 @@ def callback(data, args):
     x[0, i] = data.pose.position.x
     x[1, i] = data.pose.position.y
     x[2, i] = theta
-    
-    
+
 
     l = np.array([[0], [0], [0]])
 
@@ -668,26 +665,40 @@ def callback(data, args):
     nx[0, i] = x[0, i] + noise[0, 0]
     nx[1, i] = x[1, i] + noise[1, 0]
     nx[2, i] = x[2, i] + noise2[2, 0]
-    
+
     if firstFlag[i] == 1:
         p[0, i] = nx[0, i]
         p[1, i] = nx[1, i]
         p[2, i] = nx[2, i]
         firstFlag[i] = 0
 
+    if args == 3:
+        if len(gt_list) <= 600:
+            gt_list.append(x)
+            if len(gt_list) == 499:
+                pos_compare()
+            print(len(gt_list))
+        if len(np_list) <= 600:
+            np_list.append(nx)
+            print(len(np_list))
+        if len(pp_list) <= 600:
+            pp_list.append(p)
+            print(len(pp_list))
+
+
+
 
 
 def pos_compare():
-    global x, p, nx, plotFlag
+    global x, p, nx, plotFlag, gt_list, pp_list, np_list
     print("hello")
     plt.ion()
     fig, ax = plt.subplots(figsize=(10, 6))
-    plt.xlim(-3.0,3.0)
-    plt.ylim(-3.0,3.0)
-
+    plt.xlim(-3.0, 3.0)
+    plt.ylim(-3.0, 3.0)
 
     print('*****************************')
-  
+
     def update(frame):
         ax.clear()  # Clear old frame
         ax.set_xlim(-3.0, 3.0)
@@ -695,23 +706,25 @@ def pos_compare():
         ax.set_xlabel('X Position')
         ax.set_ylabel('Y Position')
         ax.set_title('EKF + PrSBC')
-        
+
         # Update scatter plots for current frame
-        ax.scatter(pp_list[frame][0, 0], pp_list[frame][1, 0], color='black', marker='o')
-        ax.scatter(pp_list[frame][0, 1], pp_list[frame][1, 1], color='black', marker='o')
-        ax.scatter(pp_list[frame][0, 2], pp_list[frame][1, 2], color='black', marker='o')
-        ax.scatter(pp_list[frame][0, 3], pp_list[frame][1, 3], color='black', marker='o')
-        
-        twobytwo_cov = np.array([[cov_per_list0[frame][0][0], cov_per_list0[frame][0][1]], [cov_per_list0[frame][1][0], cov_per_list0[frame][1][1]]])
+        ax.scatter(pp_list[frame*5][0, 0], pp_list[frame*5][1, 0], color='black', marker='o')
+        ax.scatter(pp_list[frame*5][0, 1], pp_list[frame*5][1, 1], color='black', marker='o')
+        ax.scatter(pp_list[frame*5][0, 2], pp_list[frame*5][1, 2], color='black', marker='o')
+        ax.scatter(pp_list[frame*5][0, 3], pp_list[frame*5][1, 3], color='black', marker='o')
+        '''
+        twobytwo_cov = np.array([[cov_per_list0[frame][0][0], cov_per_list0[frame][0][1]],
+                                 [cov_per_list0[frame][1][0], cov_per_list0[frame][1][1]]])
         eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
         major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
         circle_0_r = major_axis_length_0 / 2
         radius0 = circle_0_r
-        
+
         circle0 = patches.Circle((pp_list[frame][0, 0], pp_list[frame][1, 0]), radius0, fill=False, color='black')
         ax.add_patch(circle0)
 
-        twobytwo_cov = np.array([[cov_per_list1[frame][0][0], cov_per_list1[frame][0][1]], [cov_per_list1[frame][1][0], cov_per_list1[frame][1][1]]])
+        twobytwo_cov = np.array([[cov_per_list1[frame][0][0], cov_per_list1[frame][0][1]],
+                                 [cov_per_list1[frame][1][0], cov_per_list1[frame][1][1]]])
         eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
         major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
         circle_1_r = major_axis_length_0 / 2
@@ -720,7 +733,8 @@ def pos_compare():
         circle1 = patches.Circle((pp_list[frame][0, 1], pp_list[frame][1, 1]), radius1, fill=False, color='black')
         ax.add_patch(circle1)
 
-        twobytwo_cov = np.array([[cov_per_list2[frame][0][0], cov_per_list2[frame][0][1]], [cov_per_list2[frame][1][0], cov_per_list2[frame][1][1]]])
+        twobytwo_cov = np.array([[cov_per_list2[frame][0][0], cov_per_list2[frame][0][1]],
+                                 [cov_per_list2[frame][1][0], cov_per_list2[frame][1][1]]])
         eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
         major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
         circle_2_r = major_axis_length_0 / 2
@@ -729,7 +743,8 @@ def pos_compare():
         circle2 = patches.Circle((pp_list[frame][0, 2], pp_list[frame][1, 2]), radius2, fill=False, color='black')
         ax.add_patch(circle2)
 
-        twobytwo_cov = np.array([[cov_per_list3[frame][0][0], cov_per_list3[frame][0][1]], [cov_per_list3[frame][1][0], cov_per_list3[frame][1][1]]])
+        twobytwo_cov = np.array([[cov_per_list3[frame][0][0], cov_per_list3[frame][0][1]],
+                                 [cov_per_list3[frame][1][0], cov_per_list3[frame][1][1]]])
         eigenvalues, eigenvectors = np.linalg.eig(twobytwo_cov)
         major_axis_length_0 = 2 * np.sqrt(np.abs(np.max(eigenvalues)))
         circle_3_r = major_axis_length_0 / 2
@@ -737,41 +752,38 @@ def pos_compare():
 
         circle3 = patches.Circle((pp_list[frame][0, 3], pp_list[frame][1, 3]), radius3, fill=False, color='black')
         ax.add_patch(circle3)
+        '''
+        print(frame)
+        ax.scatter(gt_list[frame*5][0, 0], gt_list[frame*5][1, 0], color='red', marker='x')
+        ax.scatter(np_list[frame*5][0, 0], np_list[frame*5][1, 0], color='green', marker='*')
 
-        
-        ax.scatter(gt_list[frame][0, 0], gt_list[frame][1, 0], color='red', marker='x')
-        ax.scatter(np_list[frame][0, 0], np_list[frame][1, 0], color='green', marker='*')
+        ax.scatter(gt_list[frame*5][0, 1], gt_list[frame*5][1, 1], color='red', marker='x')
+        ax.scatter(np_list[frame*5][0, 1], np_list[frame*5][1, 1], color='green', marker='*')
 
-        ax.scatter(gt_list[frame][0, 1], gt_list[frame][1, 1], color='red', marker='x')
-        ax.scatter(np_list[frame][0, 1], np_list[frame][1, 1], color='green', marker='*')
+        ax.scatter(gt_list[frame*5][0, 2], gt_list[frame*5][1, 2], color='red', marker='x')
+        ax.scatter(np_list[frame*5][0, 2], np_list[frame*5][1, 2], color='green', marker='*')
 
-        ax.scatter(gt_list[frame][0, 2], gt_list[frame][1, 2], color='red', marker='x')
-        ax.scatter(np_list[frame][0, 2], np_list[frame][1, 2], color='green', marker='*')
+        ax.scatter(gt_list[frame*5][0, 3], gt_list[frame*5][1, 3], color='red', marker='x')
+        ax.scatter(np_list[frame*5][0, 3], np_list[frame*5][1, 3], color='green', marker='*')
 
-        ax.scatter(gt_list[frame][0, 3], gt_list[frame][1, 3], color='red', marker='x')
-        ax.scatter(np_list[frame][0, 3], np_list[frame][1, 3], color='green', marker='*')
-    
         # Legend and grid
+
     ax.legend(['EKF Estimated Position', 'Ground Truth Position', 'Noisy Observation'])
     ax.grid(True)
 
     anim = FuncAnimation(fig, update, frames=range(100), interval=50)
-    anim.save('animation.mp4', fps=5, extra_args=['-vcodec', 'libx264'])
+    anim.save('animation.mp4', fps=3, extra_args=['-vcodec', 'libx264'])
     plt.ioff()
 
 
-
-
 def control_callback(event):
-    global p, dxu, plotFlag
+    global p, dxu, plotFlag, x, nx, poscompF
 
-    #dxu = uni_controller(p, goal_points)
-    gt_list.append(x)
-    np_list.append(nx)
-    pp_list.append(p)
+    # dxu = uni_controller(p, goal_points)
+
+
     dxu = uni_barrier_cert(uni_controller(p, goal_points), p)
-    
-    
+
     twist131.linear.x = dxu[0, 0]
     twist131.linear.y = 0.0
     twist131.linear.z = 0.0
@@ -805,9 +817,6 @@ def control_callback(event):
     publisher188.publish(twist188)
     publisher138.publish(twist138)
 
-    if len(gt_list) == 105:
-        pos_compare()
-
 
 
 
@@ -820,9 +829,11 @@ def ekf_update_function139(event):
     predict(1)
     cov_per_list1.append(measure(1))
 
+
 def ekf_update_function188(event):
     predict(2)
     cov_per_list2.append(measure(2))
+
 
 def ekf_update_function138(event):
     predict(3)
