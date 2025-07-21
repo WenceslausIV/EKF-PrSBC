@@ -1,4 +1,4 @@
-# EKF-enhanced PrSBC
+# EKF-PrSBC
 
 Implementations of Probabilistic Barrier Certificates (PrSBC) and the Extended Kalman Filter (EKF).
 
