@@ -1,4 +1,4 @@
-Control Barrier Function (CBF) implementation in warehouse-like environments.
+Probabilistic Barrier Certificates (PrSBC) & the Extended Kalman Filter implementation.
 
 The algorithms are built on a modified Robotarium Python implementation originally provided by [Georgia Tech](https://www.robotarium.gatech.edu/).
 
