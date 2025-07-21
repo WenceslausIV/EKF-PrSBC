@@ -1,6 +1,9 @@
-Probabilistic Barrier Certificates (PrSBC) & the Extended Kalman Filter implementation.
+# Probabilistic Barrier Certificates (PrSBC) & Extended Kalman Filter Implementation
+
+Implementations of Probabilistic Barrier Certificates (PrSBC) and the Extended Kalman Filter (EKF).
 
 The algorithms are built on a modified Robotarium Python implementation originally provided by [Georgia Tech](https://www.robotarium.gatech.edu/).
+
 
 
 
