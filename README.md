@@ -2,7 +2,7 @@
 
 ![ezgif com-cut](https://github.com/user-attachments/assets/695d7b70-e371-4b34-86ed-395645849eb7)
 
-<img src="https://github.com/user-attachments/assets/e04067cb-b9a2-45a9-8126-214581961af3" alt="IMG_5535" width="300"/>
+<img src="https://github.com/user-attachments/assets/e04067cb-b9a2-45a9-8126-214581961af3" alt="IMG_5535" width="400"/>
 
 
 Implementations of Probabilistic Barrier Certificates (PrSBC) and the Extended Kalman Filter (EKF).
