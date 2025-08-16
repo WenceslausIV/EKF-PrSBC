@@ -2,8 +2,6 @@
 
 ![ezgif com-cut](https://github.com/user-attachments/assets/695d7b70-e371-4b34-86ed-395645849eb7)
 
-![IMG_5535](https://github.com/user-attachments/assets/e04067cb-b9a2-45a9-8126-214581961af3)
-
 <img src="https://github.com/user-attachments/assets/e04067cb-b9a2-45a9-8126-214581961af3" alt="IMG_5535" width="300"/>
 
 
